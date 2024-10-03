@@ -7,7 +7,7 @@ export function formatTimestampToDateTime(
 ): string {
   switch (mode) {
     case 'daily':
-      return moment(timestamp).format('MMM D HH:mm');
+      return moment(timestamp).format('HH:mm');
     case 'weekly':
       return moment(timestamp).format('ddd');
     case 'monthly':

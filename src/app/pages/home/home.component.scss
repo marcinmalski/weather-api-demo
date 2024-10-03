@@ -1,0 +1,9 @@
+.home-container {
+  ::ng-deep app-input {
+    &.error {
+      input {
+        border: 1px solid red;
+      }
+    }
+  }
+}

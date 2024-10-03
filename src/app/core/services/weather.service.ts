@@ -3,52 +3,43 @@ import moment from 'moment';
 
 import { fetchWeatherApi } from 'openmeteo';
 import { CalendarWeatherMode, WeatherTypeMode } from '../types/weather.model';
+import { LondonRomeLocation } from '../config/location';
 
 @Injectable({
   providedIn: 'root',
 })
 export class WeatherService {
+  private url = 'https://archive-api.open-meteo.com/v1/era5';
+
   async fetchWeatherData(
     currentYear: number,
     mode: CalendarWeatherMode,
     type: WeatherTypeMode,
-    latitude: number = 0,
-    longitude: number = 0
+    latitude: number = LondonRomeLocation.latitude,
+    longitude: number = LondonRomeLocation.longitude
   ) {
-    let startDate, endDate;
+    let startDate: string;
+    let endDate: string;
+
+    const baseDate = moment().year(currentYear);
 
     switch (mode) {
       case 'daily':
-        startDate = moment()
-          .year(currentYear)
-          .startOf('day')
-          .format('YYYY-MM-DD');
-        endDate = moment().year(currentYear).endOf('day').format('YYYY-MM-DD');
+        startDate = baseDate.clone().startOf('day').format('YYYY-MM-DD');
+        endDate = baseDate.clone().endOf('day').format('YYYY-MM-DD');
         break;
       case 'weekly':
-        startDate = moment()
-          .year(currentYear)
-          .startOf('week')
-          .format('YYYY-MM-DD');
-        endDate = moment().year(currentYear).endOf('week').format('YYYY-MM-DD');
+        startDate = baseDate.clone().startOf('week').format('YYYY-MM-DD');
+        endDate = baseDate.clone().endOf('week').format('YYYY-MM-DD');
         break;
       case 'monthly':
-        startDate = moment()
-          .year(currentYear)
-          .startOf('month')
-          .format('YYYY-MM-DD');
-        endDate = moment()
-          .year(currentYear)
-          .endOf('month')
-          .format('YYYY-MM-DD');
+        startDate = baseDate.clone().startOf('month').format('YYYY-MM-DD');
+        endDate = baseDate.clone().endOf('month').format('YYYY-MM-DD');
         break;
       case 'yearly':
       default:
-        startDate = moment()
-          .year(currentYear)
-          .startOf('year')
-          .format('YYYY-MM-DD');
-        endDate = moment().year(currentYear).endOf('year').format('YYYY-MM-DD');
+        startDate = baseDate.clone().startOf('year').format('YYYY-MM-DD');
+        endDate = baseDate.clone().endOf('year').format('YYYY-MM-DD');
     }
 
     let params: any = {
@@ -58,35 +49,25 @@ export class WeatherService {
       end_date: endDate,
     };
 
-    switch (mode) {
-      case 'weekly':
-      case 'monthly':
-      case 'yearly':
-        params = {
-          ...params,
-          daily:
-            type === 'temperature'
-              ? 'temperature_2m_max'
-              : type === 'humidity'
-              ? 'weather_code'
-              : 'rain_sum',
-        };
-        break;
-      default:
-        params = {
-          ...params,
-          hourly:
-            type === 'temperature'
-              ? 'temperature_2m'
-              : type === 'humidity'
-              ? 'relative_humidity_2m'
-              : 'wind_speed_10m',
-        };
-        break;
-    }
+    const isDailyMode = ['weekly', 'monthly', 'yearly'].includes(mode);
+    const dataType = isDailyMode
+      ? type === 'temperature'
+        ? 'temperature_2m_max'
+        : type === 'humidity'
+        ? 'weather_code'
+        : 'rain_sum'
+      : type === 'temperature'
+      ? 'temperature_2m'
+      : type === 'humidity'
+      ? 'relative_humidity_2m'
+      : 'wind_speed_10m';
 
-    const url = 'https://archive-api.open-meteo.com/v1/era5';
-    const responses = await fetchWeatherApi(url, params);
+    params = {
+      ...params,
+      [isDailyMode ? 'daily' : 'hourly']: dataType,
+    };
+
+    const responses = await fetchWeatherApi(this.url, params);
 
     const range = (start: number, stop: number, step: number) =>
       Array.from({ length: (stop - start) / step }, (_, i) => start + i * step);

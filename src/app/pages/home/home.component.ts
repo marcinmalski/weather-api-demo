@@ -9,6 +9,7 @@ import {
   CalendarWeatherMode,
   WeatherTypeMode,
 } from '../../core/types/weather.model';
+import { exportJsonData } from '../../core/utils/export';
 
 @Component({
   selector: 'app-home',
@@ -154,6 +155,7 @@ export class HomeComponent implements OnInit {
   }
 
   async onSubmit() {
+    this.error = '';
     const address = this.addressForm.get('address')?.value;
 
     if (!address) {
@@ -188,15 +190,6 @@ export class HomeComponent implements OnInit {
       xAxis: this.xAxisData,
     };
 
-    const jsonString = JSON.stringify(data, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'weather_data.json';
-    a.click();
-
-    URL.revokeObjectURL(url);
+    exportJsonData(data, 'weather_data.json');
   }
 }
