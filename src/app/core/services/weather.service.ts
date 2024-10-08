@@ -4,6 +4,7 @@ import moment from 'moment';
 import { fetchWeatherApi } from 'openmeteo';
 import { CalendarWeatherMode, WeatherTypeMode } from '../types/weather.model';
 import { LondonRomeLocation } from '../config/location';
+import { dataTypes } from '../config/weather';
 
 @Injectable({
   providedIn: 'root',
@@ -51,16 +52,8 @@ export class WeatherService {
 
     const isDailyMode = ['weekly', 'monthly', 'yearly'].includes(mode);
     const dataType = isDailyMode
-      ? type === 'temperature'
-        ? 'temperature_2m_max'
-        : type === 'humidity'
-        ? 'weather_code'
-        : 'rain_sum'
-      : type === 'temperature'
-      ? 'temperature_2m'
-      : type === 'humidity'
-      ? 'relative_humidity_2m'
-      : 'wind_speed_10m';
+      ? dataTypes[type].daily
+      : dataTypes[type].hourly;
 
     params = {
       ...params,
